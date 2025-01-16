@@ -44,7 +44,7 @@ export const startServer = () => {
 	// 2-й аргумент — функція-обробник (request handler), яка виконується кожен раз, коли сервер отримує GET-запит на вказаний шлях (req - об’єкт запиту і містить повну інформацію про запит; res - об’єкт для формування відповіді)
 	app.get('/', (req, res) => {
 		res.json({
-			message: 'Hello world!',
+			message: 'Hello Node.js!',
 		});
 	});
 
