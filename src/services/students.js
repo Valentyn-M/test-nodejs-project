@@ -1,32 +1,143 @@
 // Сервіси допомагають організувати код та функціонал застосунку, розділяючи їх на логічні частини.
 // Вони застосовуються для реалізації операцій, що не залучені безпосередньо до обробки маршрутів, наприклад, взаємодії з базою даних або зовнішніми API.
 
-import { StudentsCollection } from "../db/models/student.js";
+import { DB_FIELDS } from '../constants/dbFields.js';
+import { SORT_ORDER } from '../constants/index.js';
+import { StudentsCollection } from '../db/models/student.js';
+import { calculatePaginationData } from '../utils/calculatePaginationData.js';
 
 // Функція для отримання інформації про всіх студентів
 // Метод find() моделі StudentsCollection — це вбудований метод Mongoose для пошуку документів у MongoDB.
 // Викликаючи find() на моделі StudentsCollection, ми отримаємо масив документів, що відповідають моделі Student. У випадку, якщо колекція студентів порожня, метод повертає порожній масив
-export const getAllStudents = async () => {
-	try {
-		const students = await StudentsCollection.find();
-		return students;
-	}
-	catch (error) {
-		console.error(error);
-		return null;
-	}
+export const getAllStudents = async ({
+  page = 1,
+  perPage = 10,
+  sortOrder = SORT_ORDER.ASC,
+  sortBy = DB_FIELDS.ID,
+  filter = {},
+}) => {
+  // Ліміт записів, які мають бути повернуті на одній сторінці
+  const limit = perPage;
+  // Розраховуємо зміщення (skip), що дорівнює кількості записів, що мають бути пропущені перед початком видачі на поточній сторінці
+  const skip = (page - 1) * perPage;
+
+  const studentsQuery = StudentsCollection.find();
+
+  // Фільтрація за статтю: Якщо в об'єкті filter передано параметр gender, запит до бази даних обмежується студентами, стать яких відповідає зазначеній.
+  if (filter.gender) {
+    studentsQuery.where(DB_FIELDS.GENDER).equals(filter.gender);
+  }
+  // Фільтрація за віком: Якщо вказано maxAge, вибірка обмежується студентами, вік яких не перевищує це значення.   // Аналогічно, minAge встановлює мінімальний віковий поріг.
+  if (filter.maxAge) {
+    studentsQuery.where(DB_FIELDS.AGE).lte(filter.maxAge);
+  }
+  if (filter.minAge) {
+    studentsQuery.where(DB_FIELDS.AGE).gte(filter.minAge);
+  }
+  // Фільтрація за середньою оцінкою: Подібно до віку, maxAvgMark та minAvgMark використовуються для встановлення верхньої та нижньої межі середньої оцінки студентів, яких слід включити в результати.
+  if (filter.maxAvgMark) {
+    studentsQuery.where(DB_FIELDS.AVG_MARK).lte(filter.maxAvgMark);
+  }
+  if (filter.minAvgMark) {
+    studentsQuery.where(DB_FIELDS.AVG_MARK).gte(filter.minAvgMark);
+  }
+
+  // Спочатку робимо запит для визначення Загальної кількості студентів (і чекаємо await) за допомогою методу countDocuments.
+  // - merge об'єднує всі попередні запити в один запит до бази даних
+  // Потім (обов'язково після .merge(studentsQuery) -> див. попередній запит) робимо запит до бази даних для отримання Списку студентів, використовуючи спеціальні методи:
+  // - skip та limit для застосування пагінації
+  // - sort для сортування (Цей метод дозволяє організувати записи за полем, вказаним у sortBy, у порядку, заданому у sortOrder)
+  const [studentsCount, students] = await Promise.all([
+    StudentsCollection.find().merge(studentsQuery).countDocuments(),
+    studentsQuery
+      .skip(skip)
+      .limit(limit)
+      .sort({ [sortBy]: sortOrder })
+      .exec(),
+  ]);
+  // Promise.all приймає масив промісів і повертає новий проміс, який виконується, коли всі проміси в масиві успішно виконані. Результатом є масив результатів кожного з промісів у тому порядку, в якому вони були передані.
+  // Цей підхід дозволяє зменшити загальний час очікування відповіді, оскільки час виконання відповіді буде дорівнює часу виконання найдовшого запиту в масиві, а не сумі часів кожного запиту.
+
+  // Далі обраховуємо дані для пагінації, зокрема інформацію про загальну кількість сторінок і чи є наступна чи попередня сторінка
+  const paginationData = calculatePaginationData(studentsCount, perPage, page);
+
+  // Повертаємо об'єкт, що містить масив з даними про студентів і додаткову інформацію про пагінацію
+  return {
+    data: students,
+    ...paginationData,
+  };
 };
+
+// ==========================================================================================================================
 
 // Функція для отримання інформації про одного студента за _id.
 // Метод findById() моделі StudentsCollection — це вбудований метод Mongoose для пошуку одного документа у MongoDB за його унікальним ідентифікатором.
 // Викликаючи findById() на моделі StudentsCollection із вказаним ідентифікатором студента, ми отримаємо документ, що відповідає цьому ідентифікатору, як об'єкт Student. Якщо документ із заданим ідентифікатором не буде знайдено, метод поверне null
 export const getStudentById = async (studentId) => {
-	try {
-		const student = await StudentsCollection.findById(studentId);
-		return student;
-	}
-	catch (error) {
-		console.error(error);
-		return null;
-	}
+  try {
+    const student = await StudentsCollection.findById(studentId);
+    return student;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
 };
+
+// ==========================================================================================================================
+
+// Для створення нового документа в колекції, на основі вказаної моделі, в Mongoose використовується метод:
+// Model.create(doc)
+// - doc — перший аргумент (обов’язковий), який містить дані (об'єкт або масив об'єктів), які будуть використані для створення нового документа або документів у колекції. База даних створює новий документ, додає до нього унікальний ідентифікатор та повертає створений об’єкт.
+export const createStudent = async (payload) => {
+  const student = await StudentsCollection.create(payload);
+  return student;
+};
+
+// ==========================================================================================================================
+
+// Для видалення документа з колекції в Mongoose використовується метод:
+// findOneAndDelete(filter, options, callback)
+// - filter — перший аргумент, який вказує на умову, за якою відбувається пошук документа для видалення. Передається як об’єкт з властивостями. Обов'язковий аргумент
+// - options — об’єкт який може містити додаткові властивості для налаштування видалення. Наприклад, можна використовувати опцію sort, щоб вказати порядок сортування документів перед видаленням. Необов'язковий аргумент
+// - callback — якщо не використовується async/await, можна передати функцію зворотного виклику для обробки результату операції. Необов'язковий аргумент
+export const deleteStudent = async (studentId) => {
+  const student = await StudentsCollection.findOneAndDelete({
+    _id: studentId,
+  });
+  return student;
+};
+
+// ==========================================================================================================================
+
+// Функція, яка буде оновлювати дані про студента (payload) по ідентифікатору (studentId) в базі даних.
+// Для оновлення документа в колекції, на основі вказаної моделі, в Mongoose використовується метод:
+// Model.findOneAndUpdate(query, update, options, callback)
+// - query — перший аргумент (обов’язковий) це об’єкт, який містить умови пошуку документа у колекції за його властивостями
+// - update — другий аргумент (обов’язковий) це об’єкт, який містить дані для оновлення. Може бути звичайним об'єктом з новими значеннями полів або використовувати спеціальні оператори оновлення MongoDB, такі як $set, $inc тощо
+// - options — третій аргумент (обов'язковий) це об’єкт додаткових налаштувань (може бути порожнім {}), таких як:
+// -- new: повертає оновлений документ, якщо true
+// -- upsert: створює новий документ, якщо відповідний не знайдено
+// - callback - четвертий аргумент (необов’язковий) це функція зворотного виклику для обробки результату
+export const updateStudent = async (studentId, payload, options = {}) => {
+  const rawResult = await StudentsCollection.findOneAndUpdate(
+    { _id: studentId },
+    payload,
+    {
+      new: true,
+      includeResultMetadata: true,
+      ...options,
+    }
+  );
+
+  if (!rawResult || !rawResult.value) return null;
+
+  return {
+    student: rawResult.value,
+    isNew: Boolean(rawResult?.lastErrorObject?.upserted),
+  };
+};
+
+// ==========================================================================================================================
+
+// Оскільки ми вже маємо функцію сервісу updateStudent, яку ми до цього створили для PUT ендпоінта, то можемо не створювати нову, а перевикористати її.
+// Єдина відмінність буде полягати в тому, що ми не будемо під час виклику нічого передавати третім аргументом options, оскільки ми завчасно продумали цей варіант і задали options дефолтне значення як порожній об’єкт

@@ -1,35 +1,36 @@
 import { model, Schema } from 'mongoose';
+import { GENDERS } from '../../constants/gender.js';
 
 // За допомогою класу Schema з бібліотеки mongoose, створимо схему для опису структури документа студента.
 const studentsSchema = new Schema(
-	{
-		name: {
-			type: String,
-			required: true,
-		},
-		age: {
-			type: Number,
-			required: true,
-		},
-		gender: {
-			type: String,
-			required: true,
-			enum: ['male', 'female', 'other'],
-		},
-		avgMark: {
-			type: Number,
-			required: true,
-		},
-		onDuty: {
-			type: Boolean,
-			required: true,
-			default: false,
-		},
-	},
-	{
-		timestamps: true, 		// timestamps — встановлює значення true, щоб автоматично створювати поля createdAt та updatedAt, які вказують на час створення та оновлення документа
-		versionKey: false,		// вказує, чи має бути створене поле __v для відстеження версій документу. У нашому випадку ми встановлюємо false, щоб це поле не створювалося
-	},
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    age: {
+      type: Number,
+      required: true,
+    },
+    gender: {
+      type: String,
+      required: true,
+      enum: Object.values(GENDERS), // Отримуємо ключі в масиві [ 'male', 'female', 'other' ]
+    },
+    avgMark: {
+      type: Number,
+      required: true,
+    },
+    onDuty: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+  },
+  {
+    timestamps: true, // timestamps — встановлює значення true, щоб автоматично створювати поля createdAt та updatedAt, які вказують на час створення та оновлення документа
+    versionKey: false, // вказує, чи має бути створене поле __v для відстеження версій документу. У нашому випадку ми встановлюємо false, щоб це поле не створювалося
+  }
 );
 
 // Створюємо модель студента StudentsCollection за допомогою схеми studentsSchema
