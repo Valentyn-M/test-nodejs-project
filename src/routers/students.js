@@ -17,33 +17,44 @@ import {
   updateStudentSchema,
 } from '../validation/students.js';
 import { isValidId } from '../middlewares/isValidId.js';
+import { authenticate } from '../middlewares/authenticate.js';
+import { checkRoles } from '../middlewares/checkRoles.js';
+import { ROLES } from '../constants/roles.js';
 
 // router — це об'єкт, який дозволяє групувати маршрути та їх обробники (middleware) у логічні групи
 const router = Router();
 
+// Застосовуємо middleware для аутентифікації
+router.use(authenticate);
+
 // ==========================================================================================================================
 
 // Використаймо функції сервісу студентів в контролерах, тобто функціях для обробки запитів
-// /students - маршрут для отримання колекції всіх студентів
-router.get('/students', ctrlWrapper(getStudentsController));
+
+// Маршрут "/students" винесено в оеремий файл index.js
+
+router.get('/', checkRoles(ROLES.TEACHER), ctrlWrapper(getStudentsController));
 
 // /students/:studentId - маршрут для отримання студента за його id
 router.get(
-  '/students/:studentId',
+  '/:studentId',
+  checkRoles(ROLES.TEACHER, ROLES.PARENT),
   isValidId,
   ctrlWrapper(getStudentByIdController)
 );
 
 // /students - маршрут для створення студентів
 router.post(
-  '/students',
+  '/',
+  checkRoles(ROLES.TEACHER),
   validateBody(createStudentSchema),
   ctrlWrapper(createStudentController)
 );
 
 // PUT /students/:studentId
 router.put(
-  '/students/:studentId',
+  '/:studentId',
+  checkRoles(ROLES.TEACHER),
   isValidId,
   validateBody(updateStudentSchema),
   ctrlWrapper(upsertStudentController)
@@ -51,7 +62,8 @@ router.put(
 
 // PATCH /students/:studentId
 router.patch(
-  '/students/:studentId',
+  '/:studentId',
+  checkRoles(ROLES.TEACHER, ROLES.PARENT),
   isValidId,
   validateBody(updateStudentSchema),
   ctrlWrapper(patchStudentController)
@@ -59,7 +71,8 @@ router.patch(
 
 // /students/:studentId - маршрут для отримання студента за його id
 router.delete(
-  '/students/:studentId',
+  '/:studentId',
+  checkRoles(ROLES.TEACHER),
   isValidId,
   ctrlWrapper(deleteStudentController)
 );

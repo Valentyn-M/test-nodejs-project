@@ -2,7 +2,7 @@
 // Вони застосовуються для реалізації операцій, що не залучені безпосередньо до обробки маршрутів, наприклад, взаємодії з базою даних або зовнішніми API.
 
 import { DB_FIELDS } from '../constants/dbFields.js';
-import { SORT_ORDER } from '../constants/index.js';
+import { SORT_ORDER } from '../constants/sortOrder.js';
 import { StudentsCollection } from '../db/models/student.js';
 import { calculatePaginationData } from '../utils/calculatePaginationData.js';
 

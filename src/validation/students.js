@@ -1,5 +1,6 @@
 import Joi from 'joi';
 import { GENDERS } from '../constants/gender.js';
+import { isValidObjectId } from 'mongoose';
 
 // Оголошення схеми з кастомізованими повідомленнями
 export const createStudentSchema = Joi.object({
@@ -15,6 +16,12 @@ export const createStudentSchema = Joi.object({
     .required(), // ... (spread operator) передает эти значения как отдельные аргументы 'male', 'female', 'other'
   avgMark: Joi.number().min(2).max(12).required(),
   onDuty: Joi.boolean(),
+  parentId: Joi.string().custom((value, helper) => {
+    if (value && !isValidObjectId(value)) {
+      return helper.message('Parent id should be a valid mongo id');
+    }
+    return true;
+  }),
 });
 
 // Важливо вказати { abortEarly: false } при виклику методу validate, щоб отримати всі можливі помилки валідації, а не першу з них:

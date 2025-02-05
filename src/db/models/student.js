@@ -4,28 +4,12 @@ import { GENDERS } from '../../constants/gender.js';
 // За допомогою класу Schema з бібліотеки mongoose, створимо схему для опису структури документа студента.
 const studentsSchema = new Schema(
   {
-    name: {
-      type: String,
-      required: true,
-    },
-    age: {
-      type: Number,
-      required: true,
-    },
-    gender: {
-      type: String,
-      required: true,
-      enum: Object.values(GENDERS), // Отримуємо ключі в масиві [ 'male', 'female', 'other' ]
-    },
-    avgMark: {
-      type: Number,
-      required: true,
-    },
-    onDuty: {
-      type: Boolean,
-      required: true,
-      default: false,
-    },
+    name: { type: String, required: true },
+    age: { type: Number, required: true },
+    gender: { type: String, required: true, enum: Object.values(GENDERS) }, // Отримуємо ключі в масиві [ 'male', 'female', 'other' ]
+    avgMark: { type: Number, required: true },
+    onDuty: { type: Boolean, required: true, default: false },
+    parentId: { type: Schema.Types.ObjectId, ref: 'users' },
   },
   {
     timestamps: true, // timestamps — встановлює значення true, щоб автоматично створювати поля createdAt та updatedAt, які вказують на час створення та оновлення документа

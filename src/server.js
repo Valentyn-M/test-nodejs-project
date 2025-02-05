@@ -4,9 +4,10 @@ import pino from 'pino-http';
 import cors from 'cors';
 import { getEnvVar } from './utils/getEnvVar.js';
 import { ENV_VARS } from './constants/env.js';
-import studentsRouter from './routers/students.js'; // Імпортуємо роутер
+import router from './routers/index.js'; // Імпортуємо роутер
 import { errorHandler } from './middlewares/errorHandler.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
+import cookieParser from 'cookie-parser';
 
 // Отриуємо змінну оточення PORT за допомогою утилітарної функції getEnvVar
 const PORT = Number(getEnvVar(ENV_VARS.PORT, 3000));
@@ -31,6 +32,9 @@ export const startServer = () => {
 
   // Додаємо CORS до свого Express додатку як middleware
   app.use(cors());
+
+  // Використовуэмо пакет cookie-parser як middleware (для роботи з кукісами)
+  app.use(cookieParser());
 
   // Pino надає нам middleware і можливість додатково налаштовувати логгер через об’єкт властивостей.
   // Middleware для логування, такий як pino-http, слід розташовувати якомога раніше у ланцюгу middleware, щоб він міг логувати всі вхідні запити до вашого додатку, а також відповіді та можливі помилки, що виникають під час обробки цих запитів. Це означає, що pino повинен бути одним з перших мідлварів, які ви додаєте до екземпляру app.
@@ -59,7 +63,7 @@ export const startServer = () => {
   });
 
   // Додаємо роутер до app як middleware
-  app.use(studentsRouter);
+  app.use(router);
 
   // ==========================================================================================================================
 

@@ -1,7 +1,7 @@
 //  Парсер квері-параметрів для сортування
 
 import { DB_FIELDS } from '../constants/dbFields.js';
-import { SORT_ORDER } from '../constants/index.js';
+import { SORT_ORDER } from '../constants/sortOrder.js';
 
 // Функція приймає параметр sortOrder та перевіряє, чи відповідає він одному з відомих порядків сортування — або зростанню (ASC), або спаданню (DESC).
 const parseSortOrder = (sortOrder) => {
