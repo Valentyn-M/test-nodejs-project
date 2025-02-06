@@ -1,7 +1,7 @@
 import { model, Schema } from 'mongoose';
 import { ROLES } from '../../constants/roles.js';
 
-const userSchema = new Schema(
+const usersSchema = new Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true }, // поле email має бути унікальним
@@ -21,10 +21,10 @@ const userSchema = new Schema(
 // Ми маємо виправити відповідь на роуті POST /auth/register, в якій окрім всього ми повертаємо пароль. Це не є безпечним.
 // Це можна виправити за допомогою переписуванням методу toJSON() у схемі юзера:
 // - метод toJSON() викликається тоді, коли обʼєкт серіалізується (перетворюється на JSON) під час виклику JSON.stringify() або res.json().
-userSchema.method.toJSON = function () {
+usersSchema.method.toJSON = function () {
   const obj = this.toObject();
   delete obj.password;
   return obj;
 };
 
-export const UsersCollection = model('users', userSchema);
+export const UsersCollection = model('users', usersSchema);

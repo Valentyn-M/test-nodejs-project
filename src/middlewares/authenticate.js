@@ -1,5 +1,5 @@
 import createHttpError from 'http-errors';
-import { SessionCollection } from '../db/models/session.js';
+import { SessionsCollection } from '../db/models/session.js';
 import { UsersCollection } from '../db/models/user.js';
 
 // Middleware authenticate виконує процес аутентифікації користувача, перевіряючи наявність та дійсність токена доступу в заголовку запиту.
@@ -29,7 +29,7 @@ export const authenticate = async (req, res, next) => {
   }
 
   // Шукаємо сесію в колекції SessionsCollection за наданим токеном доступу.
-  const session = await SessionCollection.findOne({ accessToken: token });
+  const session = await SessionsCollection.findOne({ accessToken: token });
   // Якщо сесію не знайдено, функція викликає помилку з кодом 401 (Сесію не знайдено) і передає її до наступної функції.
   if (!session) {
     next(createHttpError(401, 'Session not found'));
@@ -46,8 +46,6 @@ export const authenticate = async (req, res, next) => {
 
   // Шукаємо користувача в колекції UsersCollection за ідентифікатором користувача, який зберігається в сесії.
   const user = await UsersCollection.findById(session.userId);
-  console.log('session: ', session);
-  console.log('session.userId: ', session.userId);
   // Якщо користувача не знайдено, функція викликає помилку з кодом 401 і передає її до наступної функції.
   if (!user) {
     next(createHttpError(401));

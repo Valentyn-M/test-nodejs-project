@@ -2,7 +2,7 @@ import createHttpError from 'http-errors';
 import { UsersCollection } from '../db/models/user.js';
 import bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
-import { SessionCollection } from '../db/models/session.js';
+import { SessionsCollection } from '../db/models/session.js';
 import { FIFTEEN_MINUTES, ONE_DAY } from '../constants/time.js';
 
 // Функція для реєстрації користувача
@@ -37,7 +37,7 @@ export const loginUser = async (payload) => {
   if (!isEqual) throw createHttpError(401, 'Unauthorized');
 
   // Видаляємо попередню сесію користувача, якщо така існує, з колекції сесій. Це робиться для уникнення конфліктів з новою сесією.
-  await SessionCollection.deleteOne({ userId: user._id });
+  await SessionsCollection.deleteOne({ userId: user._id });
 
   // Генеруємо нові токени доступу та оновлення. Використовуються випадкові байти, які конвертуються в строку формату base64.
   const accessToken = randomBytes(30).toString('base64');
@@ -45,7 +45,7 @@ export const loginUser = async (payload) => {
 
   // Створюємо нову сесію в базі даних
   // Нова сесія включає ідентифікатор користувача, згенеровані токени доступу та оновлення, а також часові межі їхньої дії. Токен доступу має обмежений термін дії (наприклад, 15 хвилин), тоді як токен для оновлення діє довше (наприклад, один день).
-  return await SessionCollection.create({
+  return await SessionsCollection.create({
     userId: user._id,
     accessToken,
     refreshToken,
@@ -58,7 +58,7 @@ export const loginUser = async (payload) => {
 
 // Функція для logout
 export const logoutUser = async (sessionId) => {
-  await SessionCollection.deleteOne({ _id: sessionId });
+  await SessionsCollection.deleteOne({ _id: sessionId });
 };
 
 // ==========================================================================================================================
@@ -82,7 +82,7 @@ const createSession = () => {
 // Функція приймає об'єкт, що містить sessionId і refreshToken
 export const refreshUserSession = async ({ sessionId, refreshToken }) => {
   // Шукаємо в колекції SessionsCollection сесію з відповідним sessionId та refreshToken.
-  const session = await SessionCollection.findOne({
+  const session = await SessionsCollection.findOne({
     _id: sessionId,
     refreshToken,
   });
@@ -101,14 +101,14 @@ export const refreshUserSession = async ({ sessionId, refreshToken }) => {
   }
 
   // Видаляємо страу сесію
-  await SessionCollection.deleteOne({ _id: sessionId });
+  await SessionsCollection.deleteOne({ _id: sessionId });
 
   // Створюємо нову сесію за допомогою функції createSession
   const newSession = createSession();
 
   // Створюємо нову сесію в колекції SessionsCollection, використовуючи ідентифікатор користувача з існуючої сесії та дані нової сесії, згенеровані функцією createSession.
   // Нову сесію збережено в базі даних і функція повертає її.
-  return await SessionCollection.create({
+  return await SessionsCollection.create({
     userId: session.userId,
     ...newSession,
   });

@@ -11,10 +11,15 @@ import {
 export const registerUserController = async (req, res) => {
   const user = await registerUser(req.body);
 
+  // Проверяем, является ли user экземпляром Mongoose Document
+  const userObj = user.toObject ? user.toObject() : user;
+  // Удаляем поле password
+  delete userObj.password;
+
   res.status(201).json({
     status: 201,
     message: 'User registered successfully!',
-    data: user,
+    data: userObj,
   });
 };
 
@@ -43,7 +48,7 @@ export const loginUserController = async (req, res) => {
   // - статусний код 200
   // - повідомлення про успішний вхід користувача
   // - дані, що містять accessToken
-  res.json({
+  res.status(200).json({
     status: 200,
     message: 'Successfully logged in an user!',
     data: {
@@ -107,7 +112,7 @@ export const refreshUserSessionController = async (req, res) => {
   // - повідомлення про успішне оновлення сесії;
   // - дані, що містять accessToken.
   // Використовується метод res.json для відправлення відповіді клієнту.
-  res.json({
+  res.status(200).json({
     status: 200,
     message: 'Successfully refreshed a session!',
     data: { accessToken: session.accessToken },
