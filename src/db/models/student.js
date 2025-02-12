@@ -10,6 +10,7 @@ const studentsSchema = new Schema(
     avgMark: { type: Number, required: true },
     onDuty: { type: Boolean, required: true, default: false },
     parentId: { type: Schema.Types.ObjectId, ref: 'users' },
+    photo: { type: String },
   },
   {
     timestamps: true, // timestamps — встановлює значення true, щоб автоматично створювати поля createdAt та updatedAt, які вказують на час створення та оновлення документа

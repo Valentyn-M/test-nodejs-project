@@ -8,6 +8,7 @@ import router from './routers/index.js'; // Імпортуємо роутер
 import { errorHandler } from './middlewares/errorHandler.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import cookieParser from 'cookie-parser';
+import { UPLOAD_DIR } from './constants/uploadDir.js';
 
 // Отриуємо змінну оточення PORT за допомогою утилітарної функції getEnvVar
 const PORT = Number(getEnvVar(ENV_VARS.PORT, 3000));
@@ -64,6 +65,9 @@ export const startServer = () => {
 
   // Додаємо роутер до app як middleware
   app.use(router);
+
+  // Додамо до нашого express можливість роздавати статичні файли
+  app.use('/uploads', express.static(UPLOAD_DIR));
 
   // ==========================================================================================================================
 

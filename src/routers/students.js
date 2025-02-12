@@ -20,6 +20,7 @@ import { isValidId } from '../middlewares/isValidId.js';
 import { authenticate } from '../middlewares/authenticate.js';
 import { checkRoles } from '../middlewares/checkRoles.js';
 import { ROLES } from '../constants/roles.js';
+import { upload } from '../middlewares/multer.js';
 
 // router — це об'єкт, який дозволяє групувати маршрути та їх обробники (middleware) у логічні групи
 const router = Router();
@@ -47,6 +48,7 @@ router.get(
 router.post(
   '/',
   checkRoles(ROLES.TEACHER),
+  upload.single('photo'),
   validateBody(createStudentSchema),
   ctrlWrapper(createStudentController)
 );
@@ -56,6 +58,7 @@ router.put(
   '/:studentId',
   checkRoles(ROLES.TEACHER),
   isValidId,
+  upload.single('photo'),
   validateBody(updateStudentSchema),
   ctrlWrapper(upsertStudentController)
 );
@@ -65,6 +68,7 @@ router.patch(
   '/:studentId',
   checkRoles(ROLES.TEACHER, ROLES.PARENT),
   isValidId,
+  upload.single('photo'),
   validateBody(updateStudentSchema),
   ctrlWrapper(patchStudentController)
 );

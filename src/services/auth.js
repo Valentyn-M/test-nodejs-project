@@ -4,6 +4,14 @@ import bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { SessionsCollection } from '../db/models/session.js';
 import { FIFTEEN_MINUTES, ONE_DAY } from '../constants/time.js';
+import jwt from 'jsonwebtoken';
+import { getEnvVar } from '../utils/getEnvVar.js';
+import { sendEmail } from '../utils/sendMail.js';
+import handlebars from 'handlebars';
+import path from 'node:path';
+import fs from 'node:fs/promises';
+import { TEMPLATES_DIR } from '../constants/templatesDir.js';
+import { ENV_VARS } from '../constants/env.js';
 
 // Функція для реєстрації користувача
 export const registerUser = async (payload) => {
@@ -112,4 +120,88 @@ export const refreshUserSession = async ({ sessionId, refreshToken }) => {
     userId: session.userId,
     ...newSession,
   });
+};
+
+// ==========================================================================================================================
+
+// Сервісна функція для скидання паролю
+export const requestResetToken = async (email) => {
+  // Шукаємо користувача в колекції користувачів за вказаною електронною поштою.
+  const user = await UsersCollection.findOne({ email });
+  // Якщо користувача не знайдено, викликається помилка з кодом 404 і повідомленням "User not found".
+  if (!user) {
+    throw createHttpError(404, 'User not found');
+  }
+
+  // Якщо користувача знайдено, функція створює токен скидання пароля, який містить:
+  // - ідентифікатор користувача;
+  // - електронну поштукористувача.
+  // Токен підписується секретом JWT і має термін дії 15 хвилин.
+  const resetToken = jwt.sign(
+    {
+      sub: user._id,
+      email,
+    },
+    // Додаємо змінну оточення JWT_SECRET, яка буде використовуватися для генерації підпису нашого токену. Значення у неї може бути довільним, наприклад, wKYqbcFlT0AOdZPkyTH6URf0gG.
+    getEnvVar(ENV_VARS.JWT_SECRET),
+    {
+      expiresIn: '15m',
+    }
+  );
+
+  // Отримуємо шлях до шаблона reset-password-email.html
+  const resetPasswordTemplatePath = path.join(
+    TEMPLATES_DIR,
+    'reset-password-email.html'
+  );
+
+  // Зчитуємо вміст шаблона
+  const templateSource = (
+    await fs.readFile(resetPasswordTemplatePath)
+  ).toString();
+
+  // Для того, щоб отримати шаблон, нам треба прочитати його контент із файла, передати в функцію handlebars.compile()
+  // Після цього ми можемо передати в результат виконання цієї функції значення, що ми хочемо використати в шаблоні, і на виході отримаємо html, що може бути використаний для відправлення у листі.
+  const template = handlebars.compile(templateSource);
+  const html = template({
+    name: user.name,
+    link: `${getEnvVar(ENV_VARS.APP_DOMAIN)}/reset-password?token=${resetToken}`,
+  });
+
+  // Після цього функція надсилає електронний лист користувачу, який містить посилання для скидання пароля з включеним створеним токеном.
+  await sendEmail({
+    from: getEnvVar(ENV_VARS.SMTP_FROM),
+    to: email,
+    subject: 'Reset tour password',
+    html,
+  });
+};
+
+// ==========================================================================================================================
+
+export const resetPassword = async (payload) => {
+  let entries;
+
+  try {
+    entries = jwt.verify(payload.token, getEnvVar(ENV_VARS.JWT_SECRET));
+  } catch (err) {
+    if (err instanceof Error) throw createHttpError(401, err.message);
+    throw err;
+  }
+
+  const user = await UsersCollection.findOne({
+    email: entries.email,
+    _id: entries.sub,
+  });
+
+  if (!user) {
+    throw createHttpError(404, 'User not found');
+  }
+
+  const encryptedPassword = await bcrypt.hash(payload.password, 10);
+
+  await UsersCollection.updateOne(
+    { _id: user._id },
+    { password: encryptedPassword }
+  );
 };

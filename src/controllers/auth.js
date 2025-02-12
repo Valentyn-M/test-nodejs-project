@@ -4,6 +4,8 @@ import {
   logoutUser,
   refreshUserSession,
   registerUser,
+  requestResetToken,
+  resetPassword,
 } from '../services/auth.js';
 
 // ==========================================================================================================================
@@ -116,5 +118,31 @@ export const refreshUserSessionController = async (req, res) => {
     status: 200,
     message: 'Successfully refreshed a session!',
     data: { accessToken: session.accessToken },
+  });
+};
+
+// ==========================================================================================================================
+
+// Контролер, який буде обробляти запит на зміну пароля
+export const requestResetEmailController = async (req, res) => {
+  await requestResetToken(req.body.email);
+
+  res.status(200).json({
+    status: 200,
+    message: 'Reset password email was successfully sent!',
+    data: {},
+  });
+};
+
+// ==========================================================================================================================
+
+// Контроллер для скидання паролю
+export const resetPasswordController = async (req, res) => {
+  await resetPassword(req.body);
+
+  res.json({
+    status: 200,
+    message: 'Password was successfully reset!',
+    data: {},
   });
 };

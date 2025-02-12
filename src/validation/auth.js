@@ -1,3 +1,5 @@
+// Схеми валідації вхідних запитів від клієнта
+
 import Joi from 'joi';
 
 // Схема для валідації реєстрації користувача
@@ -11,4 +13,15 @@ export const registerUserSchema = Joi.object({
 export const loginUserSchema = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().required(),
+});
+
+// Схема для валідації email (для скидання паролю)
+export const requestResetEmailSchema = Joi.object({
+  email: Joi.string().email().required(),
+});
+
+// Схема валідації паролю і токена
+export const resetPsswordSchema = Joi.object({
+  password: Joi.string().required(),
+  token: Joi.string().required(),
 });

@@ -10,6 +10,10 @@ import createHttpError from 'http-errors';
 import { parsePaginationParams } from '../utils/parsePaginationsParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
 import { parseFilterParams } from '../utils/parseFilterParams.js';
+import { saveFileToUploadDir } from '../utils/saveFileToUploadDir.js';
+import { getEnvVar } from '../utils/getEnvVar.js';
+import { saveFileToCloudinary } from '../utils/saveFileToCloudinary.js';
+import { ENV_VARS } from '../constants/env.js';
 // ==========================================================================================================================
 
 // Функції сервісу студентів, тобто функції для обробки запитів
@@ -123,12 +127,37 @@ export const upsertStudentController = async (req, res, next) => {
 export const patchStudentController = async (req, res, next) => {
   const studentId = req.params.studentId;
 
-  const result = await updateStudent(studentId, req.body);
+  const photo = req.file;
+  /* в photo лежить обʼєкт файлу
+	{
+    fieldname: 'photo',
+    originalname: '1739184493701.jpg',
+    encoding: '7bit',
+    mimetype: 'image/jpeg',
+    destination: 'D:\\Valentyn\\Web-Development\\Projects\\GoIT_Education\\test-projects\\test-nodejs-project\\temp',
+    filename: '1739381995234_1739184493701.jpg',
+    path: 'D:\\Valentyn\\Web-Development\\Projects\\GoIT_Education\\test-projects\\test-nodejs-project\\temp\\1739381995234_1739184493701.jpg',
+    size: 2127346
+	}
+	*/
 
-  // Відповідь, якщо студента не знайдено
+  let photoUrl;
+
+  if (photo) {
+    if (getEnvVar(ENV_VARS.ENABLE_CLOUDINARY) === 'true') {
+      photoUrl = await saveFileToCloudinary(photo);
+    } else {
+      photoUrl = await saveFileToUploadDir(photo);
+    }
+  }
+
+  const result = await updateStudent(studentId, {
+    ...req.body,
+    photo: photoUrl,
+  });
+
   if (!result) {
-    next(createHttpError(404, 'Student not found'));
-    return;
+    next(createHttpError(404, 'Student not founded'));
   }
 
   res.status(200).json({
