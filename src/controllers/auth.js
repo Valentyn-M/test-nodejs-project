@@ -1,5 +1,6 @@
 import { ONE_DAY } from '../constants/time.js';
 import {
+  loginOrSignupWithGoogle,
   loginUser,
   logoutUser,
   refreshUserSession,
@@ -7,6 +8,7 @@ import {
   requestResetToken,
   resetPassword,
 } from '../services/auth.js';
+import { generateAuthUrl } from '../utils/googleOAuth2.js';
 
 // ==========================================================================================================================
 
@@ -144,5 +146,37 @@ export const resetPasswordController = async (req, res) => {
     status: 200,
     message: 'Password was successfully reset!',
     data: {},
+  });
+};
+
+// ==========================================================================================================================
+
+// Контроллер для отримання посилання авторизації через Google OAuth
+export const getGoogleOAuthUrlController = async (req, res) => {
+  const url = generateAuthUrl();
+
+  res.json({
+    status: 200,
+    message: 'Successfully get Google OAuth url!',
+    data: {
+      url,
+      message: 'hello',
+    },
+  });
+};
+
+// ==========================================================================================================================
+
+// Контроллер логінізації за допомогою Google OAuth
+export const loginWithGoogleController = async (req, res) => {
+  const session = await loginOrSignupWithGoogle(req.body.code);
+  setupSession(res, session);
+
+  res.json({
+    status: 200,
+    message: 'Successfully logged in via Google OAuth!',
+    data: {
+      accessToken: session.accessToken,
+    },
   });
 };

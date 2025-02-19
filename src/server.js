@@ -9,6 +9,7 @@ import { errorHandler } from './middlewares/errorHandler.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import cookieParser from 'cookie-parser';
 import { UPLOAD_DIR } from './constants/uploadDir.js';
+import { swaggerDocs } from './middlewares/swaggerDocs.js';
 
 // Отриуємо змінну оточення PORT за допомогою утилітарної функції getEnvVar
 const PORT = Number(getEnvVar(ENV_VARS.PORT, 3000));
@@ -68,6 +69,10 @@ export const startServer = () => {
 
   // Додамо до нашого express можливість роздавати статичні файли
   app.use('/uploads', express.static(UPLOAD_DIR));
+
+  // Swagger
+  app.use('/uploads', express.static(UPLOAD_DIR));
+  app.use('/api-docs', swaggerDocs());
 
   // ==========================================================================================================================
 

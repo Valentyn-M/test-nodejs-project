@@ -1,0 +1,62 @@
+# tags - Цей блок вказує, що операція належить до групи операцій з тегом Students. Це допомагає категоризувати операції в документації.
+tags:
+  - Students
+# Опис операції (summary та description)
+# - summary: Короткий опис операції.
+# - description: Більш детальний опис операції.
+summary: Get student by id
+description: 'Get student by id'
+# Унікальний ідентифікатор операції (operationId) - Це унікальний ідентифікатор операції, який використовується для посилання на цю операцію у коді або документації
+operationId: getStudent
+# Безпека (security) - Цей блок вказує, що для доступу до операції потрібна аутентифікація за допомогою Bearer Token (bearerAuth), який був визначений у /docs/openapi.yaml
+security:
+  - bearerAuth: []
+# Параметри (parameters)
+# - in: path: Параметр знаходиться у шляху (URL).
+# - name: id: Ім'я параметра - id.
+# - required: true: Параметр є обов'язковим.
+# - schema: Схема параметра. Вказує, що тип даних - string.
+# - example: Приклад значення параметра.
+parameters:
+  - in: path
+    name: id
+    required: true
+    schema:
+      type: string
+      example: '67a3833a81d27c31e8db40b2'
+# Відповіді (responses)
+# - Код відповіді 200:
+# -- description: Опис відповіді - Get student by id.
+# -- content: Вміст відповіді. Вказує, що відповідь буде у форматі application/json.
+# --- schema: Схема відповіді. Вказує на структуру об'єкта відповіді:
+# ---- type: object: Відповідь є об'єктом.
+# ---- required: Перелік обов'язкових полів (status, message, data).
+# ---- properties: Опис властивостей об'єкта відповіді:
+# ----- status: Тип - integer, приклад - 200.
+# ----- message: Тип - string, приклад - Successfully found student with id 65ca67e7ae7f10c88b598384!.
+# ----- data: Тип - object, посилання на схему студента ($ref: '../../../components/schemas/student.yaml').
+responses:
+  '200':
+    description: 'Get student by id'
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - status
+            - message
+            - data
+          properties:
+            status:
+              type: integer
+              example: 200
+            message:
+              type: string
+              example: Successfully found student with id 67a3833a81d27c31e8db40b2!
+            data:
+              type: object
+              $ref: '../../../components/schemas/student.yaml'
+  # Код відповіді 401:
+  # - $ref: Посилання на загальну відповідь з кодом 401 у файлі ../../../components/responses/401.yaml.
+  '401':
+    $ref: '../../../components/responses/401.yaml'

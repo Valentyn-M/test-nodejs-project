@@ -1,0 +1,49 @@
+# Тип об'єкта (type) - Вказує, що схема описує об'єкт
+type: object
+# Обов'язкові поля (required) - Перелік полів, які є обов'язковими у об'єкті
+required:
+  - _id
+  - name
+  - age
+  - gender
+  - avgMark
+  - onDuty
+# Властивості об'єкта (properties): Властивості описують кожне поле об'єкта.
+# Кожна властивість має такі атрибути:
+# - description: Описує, що представляє це поле.
+# - type: Тип даних для цього поля (string, number, boolean тощо).
+# - example: Приклад значення для цього поля.
+# - enum (опціонально): Перелік можливих значень для поля.
+properties:
+  _id:
+    description: "Student's id"
+    type: string
+    example: 67a3833a81d27c31e8db40b2
+  name:
+    description: "Student's name"
+    type: string
+    example: 'John Doe'
+  age:
+    description: "Student's age"
+    type: number
+    example: 12
+  gender:
+    description: "Student's gender"
+    type: string
+    enum: ['male', 'female', 'other']
+  avgMark:
+    description: "Student's average mark. Should be between 1 and 12"
+    type: number
+    example: 9.7
+  onDuty:
+    description: 'Whether is student on duty'
+    type: boolean
+    example: false
+  parentId:
+    description: "Student's parent id"
+    type: string
+    example: 67a37bb7eb247fbbb2563cc6
+  photo:
+    description: "Link to student's photo"
+    type: string
+    example: https://res.cloudinary.com/dedzzgbe8/image/upload/v1739390100/ngtjeenpdivagtukljuz.jpg
